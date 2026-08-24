@@ -19,6 +19,8 @@ jobs:
             APP_URL="https://reddit-cron-job.vercel.app"
           fi
 
+          APP_URL="${APP_URL%/}"
+
           if [ -z "$CRON_SECRET" ]; then
             CRON_SECRET="super_secret_cron_token_123"
           fi
@@ -26,7 +28,7 @@ jobs:
           TARGET_URL="${APP_URL}/api/cron/reddit-monitor?secret=${CRON_SECRET}"
           echo "⏰ Triggering cron endpoint: ${APP_URL}/api/cron/reddit-monitor"
 
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -H "Authorization: Bearer ${CRON_SECRET}" "${TARGET_URL}")
+          RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" -H "Authorization: Bearer ${CRON_SECRET}" "${TARGET_URL}")
           HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
           BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
 

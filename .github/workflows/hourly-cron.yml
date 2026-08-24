@@ -14,8 +14,28 @@ jobs:
         run: |
           APP_URL="${{ secrets.NEXT_PUBLIC_APP_URL }}"
           CRON_SECRET="${{ secrets.CRON_SECRET }}"
+
           if [ -z "$APP_URL" ]; then
             APP_URL="https://reddit-cron-job.vercel.app"
           fi
-          echo "⏰ Triggering hourly cron on $APP_URL"
-          curl -s -f -X GET "$APP_URL/api/cron/reddit-monitor?secret=$CRON_SECRET" || echo "⚠️ Cron trigger finished with status"
+
+          if [ -z "$CRON_SECRET" ]; then
+            CRON_SECRET="super_secret_cron_token_123"
+          fi
+
+          TARGET_URL="${APP_URL}/api/cron/reddit-monitor?secret=${CRON_SECRET}"
+          echo "⏰ Triggering cron endpoint: ${APP_URL}/api/cron/reddit-monitor"
+
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -H "Authorization: Bearer ${CRON_SECRET}" "${TARGET_URL}")
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+
+          echo "📦 Response Body:"
+          echo "$BODY"
+          echo "📊 HTTP Status Code: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Error: Cron endpoint returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+

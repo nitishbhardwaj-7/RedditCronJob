@@ -86,6 +86,26 @@ export function normalizeComment(raw: Record<string, unknown>, fallbackPostId: s
     createdAt = new Date(raw.date as string);
   }
 
+  // Extract parent ID & reply depth
+  const rawParentId =
+    (raw.parent_id as string) ||
+    (raw.parentId as string) ||
+    (raw.replyToId as string) ||
+    (raw.replyTo as string) ||
+    null;
+
+  const rawDepth = typeof raw.depth === 'number' ? raw.depth : 0;
+  const isReplyFlag = Boolean(raw.isReply || raw.isNested || raw.replyTo);
+
+  const isNestedComment =
+    rawDepth > 0 ||
+    isReplyFlag ||
+    (rawParentId ? rawParentId.startsWith('t1_') : false);
+
+  const cleanParentId = rawParentId
+    ? rawParentId.replace('t1_', '').replace('t3_', '')
+    : null;
+
   // Extract post ID
   const postId =
     (raw.postId as string) ||
@@ -99,6 +119,8 @@ export function normalizeComment(raw: Record<string, unknown>, fallbackPostId: s
     body: body.trim(),
     redditUrl: fullUrl,
     createdAt: createdAt && !isNaN(createdAt.getTime()) ? createdAt : new Date(),
+    isNested: isNestedComment,
+    parentId: cleanParentId,
   };
 }
 
@@ -109,7 +131,7 @@ export function extractAllCommentsFromItems(
   const result: InternalRedditComment[] = [];
   const seenIds = new Set<string>();
 
-  function traverse(raw: unknown) {
+  function traverse(raw: unknown, isNestedContext: boolean = false) {
     if (!raw || typeof raw !== 'object') return;
     const obj = raw as Record<string, unknown>;
 
@@ -117,31 +139,36 @@ export function extractAllCommentsFromItems(
     if (obj.kind === 'Listing' && obj.data && typeof obj.data === 'object') {
       const listingData = obj.data as Record<string, unknown>;
       if (Array.isArray(listingData.children)) {
-        listingData.children.forEach(traverse);
+        listingData.children.forEach((c) => traverse(c, isNestedContext));
       }
     }
 
     const comment = normalizeComment(obj, fallbackPostId);
-    if (comment && !seenIds.has(comment.redditCommentId)) {
-      seenIds.add(comment.redditCommentId);
-      result.push(comment);
+    if (comment) {
+      if (isNestedContext) {
+        comment.isNested = true;
+      }
+      if (!seenIds.has(comment.redditCommentId)) {
+        seenIds.add(comment.redditCommentId);
+        result.push(comment);
+      }
     }
 
-    // Traverse nested comment trees common in Apify dataset structures
+    // Traverse nested comment trees common in Apify dataset structures (children are nested replies)
     if (Array.isArray(obj.comments)) {
-      obj.comments.forEach(traverse);
+      obj.comments.forEach((c) => traverse(c, true));
     }
     if (Array.isArray(obj.replies)) {
-      obj.replies.forEach(traverse);
+      obj.replies.forEach((c) => traverse(c, true));
     }
     if (Array.isArray(obj.childComments)) {
-      obj.childComments.forEach(traverse);
+      obj.childComments.forEach((c) => traverse(c, true));
     }
     if (Array.isArray(obj.children)) {
-      obj.children.forEach(traverse);
+      obj.children.forEach((c) => traverse(c, true));
     }
   }
 
-  items.forEach(traverse);
+  items.forEach((item) => traverse(item, false));
   return result;
 }

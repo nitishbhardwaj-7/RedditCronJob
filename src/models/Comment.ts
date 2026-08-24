@@ -12,6 +12,9 @@ export interface ICommentDocument extends Document {
   redditCreatedAt: Date | null;
   processedAt: Date;
 
+  isNested?: boolean;
+  parentId?: string | null;
+
   isNegative: boolean;
   sentiment: SentimentType;
   severity: SeverityLevel;
@@ -38,6 +41,8 @@ const CommentSchema: Schema = new Schema(
     author: { type: String, default: null },
     body: { type: String, required: true },
     redditUrl: { type: String, default: null },
+    isNested: { type: Boolean, default: false, index: true },
+    parentId: { type: String, default: null },
     redditCreatedAt: { type: Date, default: null },
     processedAt: { type: Date, default: Date.now },
 

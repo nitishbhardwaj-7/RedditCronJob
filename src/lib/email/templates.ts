@@ -24,6 +24,7 @@ export function renderAlertEmailHtml(payload: AlertEmailPayload): string {
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span style="color: #94a3b8; font-size: 13px; font-weight: 600;">@${c.author || 'anonymous'}</span>
         <div>
+          ${c.isNested ? '<span style="background-color: #1e3a8a; color: #93c5fd; font-size: 11px; padding: 2px 8px; border-radius: 12px; margin-right: 6px; font-weight: bold;">↪️ Nested Reply</span>' : ''}
           <span style="background-color: #334155; color: #cbd5e1; font-size: 11px; padding: 2px 8px; border-radius: 12px; margin-right: 6px; text-transform: uppercase; font-weight: 600;">${c.category.replace('_', ' ')}</span>
           <span style="background-color: ${getSeverityColor(c.severity)}; color: #ffffff; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: bold; text-transform: uppercase;">${c.severity}</span>
         </div>

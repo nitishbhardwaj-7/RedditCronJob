@@ -8,6 +8,7 @@ export interface AlertCommentCard {
   confidence: number;
   summary: string;
   redditUrl: string | null;
+  isNested?: boolean;
 }
 
 export interface AlertEmailPayload {

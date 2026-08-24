@@ -6,6 +6,7 @@ import { SeverityLevel, SentimentType, FeedbackCategory } from '@/types/domain';
 export interface CommentCardData {
   _id: string;
   platform?: 'reddit' | 'quora' | 'teamblind';
+  isNested?: boolean;
   redditCommentId: string;
   author: string | null;
   body: string;
@@ -43,7 +44,7 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
   return (
     <div className="bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 transition-all duration-200 flex flex-col justify-between shadow-sm">
       <div>
-        {/* Top bar with Author, Subreddit & Severity */}
+        {/* Top bar with Author, Subreddit, Nested Reply Badge & Severity */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
             <span className="font-semibold text-slate-200 flex items-center gap-1 bg-slate-800/80 px-2 py-0.5 rounded">
@@ -53,6 +54,11 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
             <span className="font-mono text-slate-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800/60 flex items-center gap-1">
               <span>{platformIcon}</span> {platformName}
             </span>
+            {comment.isNested && (
+              <span className="font-semibold text-blue-400 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800/60 flex items-center gap-1">
+                <span>↪️</span> Nested Reply
+              </span>
+            )}
             {comment.monitorName && (
               <span className="text-slate-400 truncate max-w-[150px]">
                 via <span className="text-slate-300 font-medium">{comment.monitorName}</span>

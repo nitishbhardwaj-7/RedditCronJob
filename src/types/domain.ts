@@ -26,6 +26,8 @@ export interface InternalRedditComment {
   redditUrl: string | null;
   createdAt: Date | null;
   platform?: PlatformType;
+  isNested?: boolean;
+  parentId?: string | null;
 }
 
 export interface SentimentClassificationResult {
@@ -67,6 +69,9 @@ export interface IComment {
   redditUrl: string | null;
   redditCreatedAt: Date | string | null;
   processedAt: Date | string;
+
+  isNested?: boolean;
+  parentId?: string | null;
 
   isNegative: boolean;
   sentiment: SentimentType;

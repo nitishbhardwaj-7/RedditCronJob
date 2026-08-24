@@ -106,6 +106,9 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
           redditCreatedAt: item.createdAt,
           processedAt: new Date(),
 
+          isNested: Boolean(item.isNested),
+          parentId: item.parentId || null,
+
           isNegative: ai.isNegative,
           sentiment: ai.sentiment,
           severity: ai.severity,
@@ -157,6 +160,7 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
           confidence: doc.confidence,
           summary: doc.summary,
           redditUrl: doc.redditUrl,
+          isNested: doc.isNested,
         }));
 
         const emailResult = await emailProvider.sendAlert({

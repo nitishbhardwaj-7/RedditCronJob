@@ -1,7 +1,10 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+import { PlatformType } from '@/types/domain';
+
 export interface IMonitorDocument extends Document {
   name: string;
+  platform: PlatformType;
   redditPostId: string;
   redditUrl: string;
   subreddit?: string;
@@ -19,6 +22,12 @@ export interface IMonitorDocument extends Document {
 const MonitorSchema: Schema = new Schema(
   {
     name: { type: String, required: true, trim: true },
+    platform: {
+      type: String,
+      enum: ['reddit', 'quora', 'teamblind'],
+      default: 'reddit',
+      index: true,
+    },
     redditPostId: { type: String, required: true, index: true },
     redditUrl: { type: String, required: true, trim: true },
     subreddit: { type: String, trim: true },

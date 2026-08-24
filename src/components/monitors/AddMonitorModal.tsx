@@ -19,6 +19,7 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
   onSuccess,
 }) => {
   const [name, setName] = useState('');
+  const [platform, setPlatform] = useState<'reddit' | 'quora' | 'teamblind'>('reddit');
   const [redditUrl, setRedditUrl] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [enabled, setEnabled] = useState(true);
@@ -38,6 +39,7 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
     // Validate with Zod
     const validation = createMonitorSchema.safeParse({
       name,
+      platform,
       redditUrl,
       recipientEmail,
       enabled,
@@ -58,7 +60,7 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
     setCrawlStatusText('Saving monitor settings...');
 
     try {
-      setCrawlStatusText('Running initial crawl via Apify...');
+      setCrawlStatusText(`Running initial crawl via ${platform.toUpperCase()} scraper...`);
       const response = await fetch('/api/monitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,6 +90,7 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
         onClose();
         // Reset form
         setName('');
+        setPlatform('reddit');
         setRedditUrl('');
         setRecipientEmail('');
         setSuccessInfo(null);
@@ -100,12 +103,19 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
     }
   };
 
+  const urlPlaceholder =
+    platform === 'quora'
+      ? 'https://www.quora.com/What-are-the-biggest-complaints-about-XYZ-product'
+      : platform === 'teamblind'
+      ? 'https://www.us.teamblind.com/post/XYZ-Company-Discussion-thread-12345'
+      : 'https://www.reddit.com/r/example/comments/abc123/example_post/';
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add Reddit Monitor"
-      description="Enter a Reddit post URL to start tracking negative comments automatically."
+      title="Add Brand Monitor"
+      description="Select a platform and URL to track negative comments automatically."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {serverError && (
@@ -122,9 +132,50 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
           </div>
         )}
 
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+            Select Platform
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setPlatform('reddit')}
+              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                platform === 'reddit'
+                  ? 'bg-orange-500/20 border-orange-500/50 text-orange-300 font-semibold'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>🔥</span> Reddit
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlatform('quora')}
+              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                platform === 'quora'
+                  ? 'bg-red-500/20 border-red-500/50 text-red-300 font-semibold'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>❓</span> Quora
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlatform('teamblind')}
+              className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all flex items-center justify-center gap-1.5 ${
+                platform === 'teamblind'
+                  ? 'bg-teal-500/20 border-teal-500/50 text-teal-300 font-semibold'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>👁️</span> Team Blind
+            </button>
+          </div>
+        </div>
+
         <Input
           label="Monitor Name"
-          placeholder="e.g. Product Launch Feedback Monitor"
+          placeholder="e.g. Brand Feedback Monitor"
           icon={<Radio className="w-4 h-4" />}
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -133,13 +184,13 @@ export const AddMonitorModal: React.FC<AddMonitorModalProps> = ({
         />
 
         <Input
-          label="Reddit Post URL"
-          placeholder="https://www.reddit.com/r/example/comments/abc123/example_post/"
+          label={`${platform.toUpperCase()} Post/Thread URL`}
+          placeholder={urlPlaceholder}
           icon={<LinkIcon className="w-4 h-4" />}
           value={redditUrl}
           onChange={(e) => setRedditUrl(e.target.value)}
           error={errors.redditUrl}
-          helperText="Must be a direct link to a Reddit post comments thread."
+          helperText={`Must be a direct link to a ${platform} post or question thread.`}
           disabled={isLoading}
         />
 

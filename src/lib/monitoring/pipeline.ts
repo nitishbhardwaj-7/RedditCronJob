@@ -4,7 +4,7 @@ import { MonitorModel, IMonitorDocument } from '@/models/Monitor';
 import { CommentModel } from '@/models/Comment';
 import { AlertModel } from '@/models/Alert';
 import { CrawlLogModel } from '@/models/CrawlLog';
-import { getRedditProvider, getSentimentProvider, getEmailProvider } from '../providers/factory';
+import { getScraperProvider, getRedditProvider, getSentimentProvider, getEmailProvider } from '../providers/factory';
 import { InternalRedditComment, SeverityLevel, SentimentClassificationResult } from '@/types/domain';
 import { CrawlResultData } from '@/types/api';
 
@@ -44,17 +44,18 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
   await crawlLog.save();
 
   try {
-    const redditProvider = getRedditProvider();
+    const platform = monitor.platform || 'reddit';
+    const scraperProvider = getScraperProvider(platform);
     const sentimentProvider = getSentimentProvider();
     const emailProvider = getEmailProvider();
 
     console.log(`\n==================================================`);
-    console.log(`🕷️ Starting monitor crawl for: "${monitor.name}" (${monitor.redditUrl})`);
-    console.log(`Providers: Reddit [${redditProvider.name}] | AI [${sentimentProvider.name}] | Email [${emailProvider.name}]`);
+    console.log(`🕷️ Starting monitor crawl for: "${monitor.name}" (${platform.toUpperCase()}) -> ${monitor.redditUrl}`);
+    console.log(`Providers: Scraper [${scraperProvider.name}] | AI [${sentimentProvider.name}] | Email [${emailProvider.name}]`);
 
-    // 2. Retrieve Comments via Reddit Provider
-    const fetchedComments: InternalRedditComment[] = await redditProvider.fetchComments(monitor.redditUrl);
-    console.log(`📥 Fetched ${fetchedComments.length} raw comments from provider`);
+    // 2. Retrieve Comments via Scraper Provider
+    const fetchedComments: InternalRedditComment[] = await scraperProvider.fetchComments(monitor.redditUrl, platform);
+    console.log(`📥 Fetched ${fetchedComments.length} raw comments from ${platform} provider`);
 
     // 3. Deduplicate against MongoDB (Incremental Comment Processing)
     const existingCommentDocs = await CommentModel.find(
@@ -95,6 +96,7 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
         };
 
         return {
+          platform: platform,
           redditCommentId: item.redditCommentId,
           monitorId: monitor._id,
           postId: item.postId || monitor.redditPostId,
@@ -160,6 +162,7 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
         const emailResult = await emailProvider.sendAlert({
           recipientEmail: monitor.recipientEmail,
           monitorName: monitor.name,
+          platform: platform,
           postTitle: monitor.postTitle || monitor.name,
           redditUrl: monitor.redditUrl,
           negativeCount: newNegativeDocs.length,

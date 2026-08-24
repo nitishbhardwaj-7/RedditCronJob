@@ -11,8 +11,8 @@ export class ApifyRedditProvider implements RedditProvider {
   private maxPollingMs = 90000; // 90 seconds timeout
 
   constructor() {
-    const token = process.env.APIFY_API_TOKEN;
-    this.actorId = process.env.APIFY_ACTOR_ID || 'clearpath/reddit-post-comments-bulk-scraper';
+    const token = process.env.APIFY_REDDIT_API_TOKEN || process.env.APIFY_API_TOKEN;
+    this.actorId = process.env.APIFY_REDDIT_ACTOR_ID || process.env.APIFY_ACTOR_ID || 'clearpath/reddit-post-comments-bulk-scraper';
     if (token) {
       this.client = new ApifyClient({ token });
     }

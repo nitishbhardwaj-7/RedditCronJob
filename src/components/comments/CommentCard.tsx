@@ -5,6 +5,7 @@ import { SeverityLevel, SentimentType, FeedbackCategory } from '@/types/domain';
 
 export interface CommentCardData {
   _id: string;
+  platform?: 'reddit' | 'quora' | 'teamblind';
   redditCommentId: string;
   author: string | null;
   body: string;
@@ -35,6 +36,10 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
     minute: '2-digit',
   });
 
+  const platform = comment.platform || 'reddit';
+  const platformName = platform === 'quora' ? 'Quora' : platform === 'teamblind' ? 'Team Blind' : 'Reddit';
+  const platformIcon = platform === 'quora' ? '❓' : platform === 'teamblind' ? '👁️' : '🔥';
+
   return (
     <div className="bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 rounded-xl p-5 transition-all duration-200 flex flex-col justify-between shadow-sm">
       <div>
@@ -43,13 +48,11 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
           <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
             <span className="font-semibold text-slate-200 flex items-center gap-1 bg-slate-800/80 px-2 py-0.5 rounded">
               <User className="w-3 h-3 text-slate-400" />
-              u/{comment.author || 'anonymous'}
+              @{comment.author || 'anonymous'}
             </span>
-            {comment.subreddit && (
-              <span className="font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800/60">
-                {comment.subreddit}
-              </span>
-            )}
+            <span className="font-mono text-slate-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800/60 flex items-center gap-1">
+              <span>{platformIcon}</span> {platformName}
+            </span>
             {comment.monitorName && (
               <span className="text-slate-400 truncate max-w-[150px]">
                 via <span className="text-slate-300 font-medium">{comment.monitorName}</span>
@@ -84,7 +87,7 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
         </div>
       </div>
 
-      {/* Footer Info & Reddit Link */}
+      {/* Footer Info & External Link */}
       <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 text-xs text-slate-400">
         <div className="flex items-center gap-2">
           <Badge variant="default" size="sm" className="capitalize">
@@ -103,11 +106,11 @@ export const CommentCard: React.FC<CommentCardProps> = ({ comment }) => {
             rel="noreferrer"
             className="inline-flex items-center gap-1 text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
           >
-            <span>View on Reddit</span>
+            <span>View on {platformName}</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         ) : (
-          <span className="text-slate-500 text-[11px]">Reddit permalink unavailable</span>
+          <span className="text-slate-500 text-[11px]">Permalink unavailable</span>
         )}
       </div>
     </div>

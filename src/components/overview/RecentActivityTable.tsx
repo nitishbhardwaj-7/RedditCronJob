@@ -40,8 +40,8 @@ export const RecentActivityTable: React.FC<RecentActivityTableProps> = ({
       <table className="w-full text-left text-sm text-slate-300">
         <thead className="bg-slate-950/80 text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-800">
           <tr>
-            <th className="py-3.5 px-4">Reddit Post</th>
-            <th className="py-3.5 px-4">Subreddit</th>
+            <th className="py-3.5 px-4">Brand Monitor</th>
+            <th className="py-3.5 px-4">Platform</th>
             <th className="py-3.5 px-4">Last Checked</th>
             <th className="py-3.5 px-4 text-center">Comments</th>
             <th className="py-3.5 px-4 text-center">Negative</th>
@@ -50,28 +50,35 @@ export const RecentActivityTable: React.FC<RecentActivityTableProps> = ({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/60">
-          {activities.map(({ monitor, lastChecked, newComments, negativeComments, status }) => (
-            <tr key={monitor._id} className="hover:bg-slate-800/40 transition-colors">
-              <td className="py-3.5 px-4 font-medium text-white max-w-xs truncate">
-                <div className="flex flex-col">
-                  <span className="font-semibold text-slate-100">{monitor.name}</span>
-                  <a
-                    href={monitor.redditUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-blue-400 hover:underline inline-flex items-center gap-1 mt-0.5 truncate"
-                  >
-                    <span className="truncate">{monitor.redditUrl}</span>
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                </div>
-              </td>
-              <td className="py-3.5 px-4 text-xs text-slate-400 font-mono">
-                {monitor.subreddit || 'r/reddit'}
-              </td>
-              <td className="py-3.5 px-4 text-xs text-slate-400">
-                {lastChecked ? new Date(lastChecked).toLocaleString() : 'Never'}
-              </td>
+          {activities.map(({ monitor, lastChecked, newComments, negativeComments, status }) => {
+            const platform = monitor.platform || 'reddit';
+            const platformIcon = platform === 'quora' ? '❓' : platform === 'teamblind' ? '👁️' : '🔥';
+            const platformLabel = platform === 'quora' ? 'Quora' : platform === 'teamblind' ? 'Team Blind' : 'Reddit';
+
+            return (
+              <tr key={monitor._id} className="hover:bg-slate-800/40 transition-colors">
+                <td className="py-3.5 px-4 font-medium text-white max-w-xs truncate">
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-100">{monitor.name}</span>
+                    <a
+                      href={monitor.redditUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-400 hover:underline inline-flex items-center gap-1 mt-0.5 truncate"
+                    >
+                      <span className="truncate">{monitor.redditUrl}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0" />
+                    </a>
+                  </div>
+                </td>
+                <td className="py-3.5 px-4 text-xs font-mono">
+                  <span className="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-slate-300 inline-flex items-center gap-1">
+                    <span>{platformIcon}</span> {platformLabel}
+                  </span>
+                </td>
+                <td className="py-3.5 px-4 text-xs text-slate-400">
+                  {lastChecked ? new Date(lastChecked).toLocaleString() : 'Never'}
+                </td>
               <td className="py-3.5 px-4 text-center font-mono text-xs">{newComments}</td>
               <td className="py-3.5 px-4 text-center font-mono text-xs">
                 {negativeComments > 0 ? (
@@ -113,8 +120,9 @@ export const RecentActivityTable: React.FC<RecentActivityTableProps> = ({
                 </div>
               </td>
             </tr>
-          ))}
-        </tbody>
+          );
+        })}
+      </tbody>
       </table>
     </div>
   );

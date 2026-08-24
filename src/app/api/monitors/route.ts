@@ -5,10 +5,18 @@ import { CommentModel } from '@/models/Comment';
 import { createMonitorSchema, parseRedditUrl } from '@/lib/validation/schemas';
 import { processMonitorCrawl } from '@/lib/monitoring/pipeline';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await dbConnect();
-    const monitors = await MonitorModel.find().sort({ createdAt: -1 }).lean();
+    const { searchParams } = new URL(req.url);
+    const platform = searchParams.get('platform');
+
+    const filter: Record<string, any> = {};
+    if (platform && ['reddit', 'quora', 'teamblind'].includes(platform)) {
+      filter.platform = platform;
+    }
+
+    const monitors = await MonitorModel.find(filter).sort({ createdAt: -1 }).lean();
 
     // Attach comment counts and negative counts for each monitor
     const monitorData = await Promise.all(
@@ -42,15 +50,16 @@ export async function POST(req: Request) {
 
     await dbConnect();
 
-    // Extract post ID and subreddit
-    const { postId, subreddit } = parseRedditUrl(validated.redditUrl);
+    const platform = validated.platform || 'reddit';
+    const { postId, subreddit } = parseRedditUrl(validated.redditUrl, platform);
 
     // Create monitor record
     const monitor = new MonitorModel({
       name: validated.name,
+      platform: platform,
       redditPostId: postId,
       redditUrl: validated.redditUrl,
-      subreddit: subreddit || 'r/reddit',
+      subreddit: subreddit || (platform === 'quora' ? 'Quora Topics' : platform === 'teamblind' ? 'Team Blind' : 'r/reddit'),
       recipientEmail: validated.recipientEmail,
       enabled: validated.enabled ?? true,
       lastCrawlStatus: 'idle',

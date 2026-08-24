@@ -18,6 +18,7 @@ interface MonitorWithStats extends IMonitor {
 export default function MonitorsPage() {
   const [monitors, setMonitors] = useState<MonitorWithStats[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -87,12 +88,16 @@ export default function MonitorsPage() {
     }
   };
 
-  const filteredMonitors = monitors.filter(
-    (m) =>
+  const filteredMonitors = monitors.filter((m) => {
+    const matchesPlatform =
+      selectedPlatform === 'all' || (m.platform || 'reddit') === selectedPlatform;
+    const matchesSearch =
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.redditUrl.toLowerCase().includes(search.toLowerCase()) ||
-      (m.subreddit && m.subreddit.toLowerCase().includes(search.toLowerCase()))
-  );
+      (m.subreddit && m.subreddit.toLowerCase().includes(search.toLowerCase()));
+
+    return matchesPlatform && matchesSearch;
+  });
 
   return (
     <AppLayout>
@@ -100,9 +105,9 @@ export default function MonitorsPage() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">Reddit Monitors</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Brand Monitors</h1>
             <p className="text-xs text-slate-400 mt-1">
-              Manage configured Reddit post URL scrapers and hourly monitoring routines.
+              Manage configured Reddit, Quora, and Team Blind post scrapers and hourly monitoring routines.
             </p>
           </div>
           <Button
@@ -114,18 +119,41 @@ export default function MonitorsPage() {
           </Button>
         </div>
 
-        {/* Filter bar */}
-        <div className="flex items-center gap-4 bg-slate-900/60 p-4 border border-slate-800 rounded-xl">
-          <div className="max-w-md w-full">
-            <Input
-              placeholder="Search monitors by name, URL, or subreddit..."
-              icon={<Search className="w-4 h-4" />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {/* Platform Tabs & Filter Bar */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            {[
+              { id: 'all', label: 'All Platforms', icon: '🌐' },
+              { id: 'reddit', label: 'Reddit', icon: '🔥' },
+              { id: 'quora', label: 'Quora', icon: '❓' },
+              { id: 'teamblind', label: 'Team Blind', icon: '👁️' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedPlatform(tab.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  selectedPlatform === tab.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
+              >
+                <span>{tab.icon}</span> {tab.label}
+              </button>
+            ))}
           </div>
-          <div className="text-xs text-slate-400 font-mono ml-auto">
-            Showing <strong>{filteredMonitors.length}</strong> of {monitors.length} monitors
+
+          <div className="flex items-center gap-4 bg-slate-900/60 p-4 border border-slate-800 rounded-xl">
+            <div className="max-w-md w-full">
+              <Input
+                placeholder="Search monitors by name, URL, or topic..."
+                icon={<Search className="w-4 h-4" />}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="text-xs text-slate-400 font-mono ml-auto">
+              Showing <strong>{filteredMonitors.length}</strong> of {monitors.length} monitors
+            </div>
           </div>
         </div>
 

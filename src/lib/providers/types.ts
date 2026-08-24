@@ -1,4 +1,4 @@
-import { InternalRedditComment, SentimentClassificationResult, SeverityLevel } from '@/types/domain';
+import { InternalRedditComment, SentimentClassificationResult, SeverityLevel, PlatformType } from '@/types/domain';
 
 export interface AlertCommentCard {
   author: string | null;
@@ -13,6 +13,7 @@ export interface AlertCommentCard {
 export interface AlertEmailPayload {
   recipientEmail: string;
   monitorName: string;
+  platform?: PlatformType;
   postTitle?: string;
   redditUrl: string;
   negativeCount: number;
@@ -28,7 +29,7 @@ export interface EmailSendResult {
 
 export interface RedditProvider {
   name: string;
-  fetchComments(redditUrl: string): Promise<InternalRedditComment[]>;
+  fetchComments(url: string, platform?: PlatformType): Promise<InternalRedditComment[]>;
 }
 
 export interface SentimentProvider {

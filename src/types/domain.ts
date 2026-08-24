@@ -16,6 +16,8 @@ export type FeedbackCategory =
   | 'general_complaint'
   | 'other';
 
+export type PlatformType = 'reddit' | 'quora' | 'teamblind';
+
 export interface InternalRedditComment {
   redditCommentId: string;
   postId: string;
@@ -23,6 +25,7 @@ export interface InternalRedditComment {
   body: string;
   redditUrl: string | null;
   createdAt: Date | null;
+  platform?: PlatformType;
 }
 
 export interface SentimentClassificationResult {
@@ -38,6 +41,7 @@ export interface SentimentClassificationResult {
 export interface IMonitor {
   _id: string;
   name: string;
+  platform: PlatformType;
   redditPostId: string;
   redditUrl: string;
   subreddit?: string;
@@ -54,6 +58,7 @@ export interface IMonitor {
 
 export interface IComment {
   _id: string;
+  platform: PlatformType;
   redditCommentId: string;
   monitorId: string;
   postId: string;

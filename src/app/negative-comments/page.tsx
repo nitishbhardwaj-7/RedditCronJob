@@ -13,6 +13,7 @@ export default function NegativeCommentsPage() {
 
   // Filters
   const [search, setSearch] = useState('');
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
@@ -20,6 +21,7 @@ export default function NegativeCommentsPage() {
     setIsLoading(true);
     try {
       const queryParams = new URLSearchParams();
+      if (platformFilter !== 'all') queryParams.append('platform', platformFilter);
       if (severityFilter !== 'all') queryParams.append('severity', severityFilter);
       if (categoryFilter !== 'all') queryParams.append('category', categoryFilter);
       if (search.trim()) queryParams.append('search', search);
@@ -34,11 +36,18 @@ export default function NegativeCommentsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [severityFilter, categoryFilter, search]);
+  }, [platformFilter, severityFilter, categoryFilter, search]);
 
   useEffect(() => {
     fetchNegativeComments();
   }, [fetchNegativeComments]);
+
+  const platformTabs = [
+    { id: 'all', label: 'All Platforms', icon: '🌐' },
+    { id: 'reddit', label: 'Reddit', icon: '🔥' },
+    { id: 'quora', label: 'Quora', icon: '❓' },
+    { id: 'teamblind', label: 'Team Blind', icon: '👁️' },
+  ];
 
   const severityTabs = [
     { id: 'all', label: 'All Severities' },
@@ -59,7 +68,7 @@ export default function NegativeCommentsPage() {
               Negative Feedback Feed
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Global repository of meaningful negative comments classified by Gemini AI across all monitors.
+              Global repository of negative comments classified by Gemini AI across Reddit, Quora, and Team Blind.
             </p>
           </div>
           <Button
@@ -73,21 +82,39 @@ export default function NegativeCommentsPage() {
           </Button>
         </div>
 
-        {/* Severity Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
-          {severityTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSeverityFilter(tab.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
-                severityFilter === tab.id
-                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Platform & Severity Filter Tabs */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            {platformTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setPlatformFilter(tab.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  platformFilter === tab.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`}
+              >
+                <span>{tab.icon}</span> {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {severityTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSeverityFilter(tab.id)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors shrink-0 ${
+                  severityFilter === tab.id
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Search & Category Filter Bar */}

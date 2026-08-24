@@ -1,7 +1,8 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { SentimentType, SeverityLevel, FeedbackCategory } from '@/types/domain';
+import { SentimentType, SeverityLevel, FeedbackCategory, PlatformType } from '@/types/domain';
 
 export interface ICommentDocument extends Document {
+  platform: PlatformType;
   redditCommentId: string;
   monitorId: mongoose.Types.ObjectId;
   postId: string;
@@ -25,6 +26,12 @@ export interface ICommentDocument extends Document {
 
 const CommentSchema: Schema = new Schema(
   {
+    platform: {
+      type: String,
+      enum: ['reddit', 'quora', 'teamblind'],
+      default: 'reddit',
+      index: true,
+    },
     redditCommentId: { type: String, required: true },
     monitorId: { type: Schema.Types.ObjectId, ref: 'Monitor', required: true, index: true },
     postId: { type: String, required: true, index: true },

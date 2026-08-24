@@ -1,26 +1,28 @@
 import { z } from 'zod';
-
-export const REDDIT_URL_REGEX =
-  /^https?:\/\/(www\.|new\.|old\.)?reddit\.com\/r\/([a-zA-Z0-9_]+)\/comments\/([a-zA-Z0-9]+)(\/[a-zA-Z0-9_]+\/?)?$/i;
+import { PlatformType } from '@/types/domain';
 
 export const createMonitorSchema = z.object({
   name: z.string().min(2, 'Monitor name must be at least 2 characters').max(100),
+  platform: z.enum(['reddit', 'quora', 'teamblind']).default('reddit'),
   redditUrl: z
     .string()
     .url('Invalid URL format')
     .refine((url) => {
-      // Check if URL matches Reddit post pattern or standard reddit post URL format
+      const lower = url.toLowerCase();
       return (
-        url.includes('reddit.com/r/') &&
-        url.includes('/comments/')
+        lower.includes('reddit.com') ||
+        lower.includes('quora.com') ||
+        lower.includes('teamblind.com') ||
+        lower.includes('blind.com')
       );
-    }, 'Must be a valid Reddit post URL (e.g., https://www.reddit.com/r/example/comments/abc123/example_post/)'),
+    }, 'Must be a valid Reddit, Quora, or Team Blind URL'),
   recipientEmail: z.string().email('Invalid alert email address'),
   enabled: z.boolean().default(true),
 });
 
 export const updateMonitorSchema = z.object({
   name: z.string().min(2, 'Monitor name must be at least 2 characters').max(100).optional(),
+  platform: z.enum(['reddit', 'quora', 'teamblind']).optional(),
   recipientEmail: z.string().email('Invalid email address').optional(),
   enabled: z.boolean().optional(),
 });
@@ -32,12 +34,36 @@ export const settingsSchema = z.object({
   defaultRecipientEmail: z.string().email('Invalid email address'),
 });
 
-export function parseRedditUrl(url: string): { postId: string; subreddit?: string } {
+export function detectPlatformFromUrl(url: string): PlatformType {
+  const lower = url.toLowerCase();
+  if (lower.includes('quora.com')) return 'quora';
+  if (lower.includes('teamblind.com') || lower.includes('blind.com')) return 'teamblind';
+  return 'reddit';
+}
+
+export function parseRedditUrl(url: string, targetPlatform?: PlatformType): { postId: string; subreddit?: string } {
   try {
+    const platform = targetPlatform || detectPlatformFromUrl(url);
     const parsed = new URL(url);
     const pathParts = parsed.pathname.split('/').filter(Boolean);
 
-    // pathParts format: ['r', 'subreddit', 'comments', 'postId', 'slug']
+    if (platform === 'quora') {
+      const questionSlug = pathParts[0] || 'quora_question';
+      return {
+        postId: questionSlug.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        subreddit: 'Quora Topics',
+      };
+    }
+
+    if (platform === 'teamblind') {
+      const blindSlug = pathParts[pathParts.length - 1] || 'blind_post';
+      return {
+        postId: blindSlug.replace(/[^a-zA-Z0-9_-]/g, '_'),
+        subreddit: 'Team Blind',
+      };
+    }
+
+    // Default Reddit Parsing
     let subreddit: string | undefined;
     let postId: string | undefined;
 
@@ -52,7 +78,6 @@ export function parseRedditUrl(url: string): { postId: string; subreddit?: strin
     }
 
     if (!postId) {
-      // Fallback: search for alphanumeric part after comments
       const match = url.match(/\/comments\/([a-zA-Z0-9]+)/i);
       if (match && match[1]) {
         postId = match[1];
@@ -61,7 +86,7 @@ export function parseRedditUrl(url: string): { postId: string; subreddit?: strin
 
     return {
       postId: postId || 'unknown_post_id',
-      subreddit,
+      subreddit: subreddit || 'Reddit',
     };
   } catch {
     return { postId: 'unknown_post_id' };

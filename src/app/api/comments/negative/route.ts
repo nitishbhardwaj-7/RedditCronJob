@@ -12,10 +12,15 @@ export async function GET(req: Request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const monitorId = searchParams.get('monitorId');
+    const platform = searchParams.get('platform');
 
     await dbConnect();
 
     const query: FilterQuery<ICommentDocument> = { isNegative: true };
+
+    if (platform && platform !== 'all' && ['reddit', 'quora', 'teamblind'].includes(platform)) {
+      query.platform = platform;
+    }
 
     if (severity && severity !== 'all') {
       query.severity = severity;

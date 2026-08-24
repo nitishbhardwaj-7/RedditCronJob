@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { clsx } from 'clsx';
 import {
   LayoutDashboard,
@@ -11,18 +11,15 @@ import {
   Bell,
   Settings,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 
-const navigationItems = [
-  { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Monitors', href: '/monitors', icon: Radio },
-  { name: 'Negative Comments', href: '/negative-comments', icon: MessageSquareWarning },
-  { name: 'Alerts', href: '/alerts', icon: Bell },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
-
-export const Sidebar: React.FC = () => {
+function SidebarContent() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentPlatform = searchParams.get('platform');
+
+  const isMonitorsActive = pathname.startsWith('/monitors');
 
   return (
     <aside className="w-64 bg-slate-900/95 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen">
@@ -33,36 +30,129 @@ export const Sidebar: React.FC = () => {
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-bold text-white text-base tracking-tight leading-none">RedditPulse</h1>
+            <h1 className="font-bold text-white text-base tracking-tight leading-none">BrandPulse</h1>
             <p className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">AI Sentiment Monitor</p>
           </div>
         </div>
 
         {/* Navigation List */}
-        <nav className="p-4 space-y-1">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
+        <nav className="p-4 space-y-1.5">
+          {/* Overview */}
+          <Link
+            href="/"
+            className={clsx(
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+              pathname === '/'
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <LayoutDashboard className={clsx('w-4 h-4', pathname === '/' ? 'text-blue-400' : 'text-slate-400')} />
+            <span>Overview</span>
+          </Link>
 
-            return (
+          {/* Monitors Group */}
+          <div className="space-y-1">
+            <Link
+              href="/monitors"
+              className={clsx(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                isMonitorsActive && !currentPlatform
+                  ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Radio className={clsx('w-4 h-4', isMonitorsActive ? 'text-blue-400' : 'text-slate-400')} />
+                <span>Monitors</span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+            </Link>
+
+            {/* Platform Specific Monitor Sub-Links */}
+            <div className="pl-4 space-y-1 pt-0.5 border-l border-slate-800/80 ml-4">
               <Link
-                key={item.name}
-                href={item.href}
+                href="/monitors?platform=reddit"
                 className={clsx(
-                  'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                  isActive
-                    ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                  isMonitorsActive && currentPlatform === 'reddit'
+                    ? 'bg-orange-500/20 text-orange-300 font-semibold border border-orange-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
                 )}
               >
-                <Icon className={clsx('w-4 h-4', isActive ? 'text-blue-400' : 'text-slate-400')} />
-                <span>{item.name}</span>
+                <span>🔥</span>
+                <span>Reddit Monitors</span>
               </Link>
-            );
-          })}
+
+              <Link
+                href="/monitors?platform=quora"
+                className={clsx(
+                  'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                  isMonitorsActive && currentPlatform === 'quora'
+                    ? 'bg-red-500/20 text-red-300 font-semibold border border-red-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                )}
+              >
+                <span>❓</span>
+                <span>Quora Monitors</span>
+              </Link>
+
+              <Link
+                href="/monitors?platform=teamblind"
+                className={clsx(
+                  'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all',
+                  isMonitorsActive && currentPlatform === 'teamblind'
+                    ? 'bg-teal-500/20 text-teal-300 font-semibold border border-teal-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                )}
+              >
+                <span>👁️</span>
+                <span>Team Blind Monitors</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Negative Comments */}
+          <Link
+            href="/negative-comments"
+            className={clsx(
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+              pathname.startsWith('/negative-comments')
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <MessageSquareWarning className={clsx('w-4 h-4', pathname.startsWith('/negative-comments') ? 'text-blue-400' : 'text-slate-400')} />
+            <span>Negative Comments</span>
+          </Link>
+
+          {/* Alerts */}
+          <Link
+            href="/alerts"
+            className={clsx(
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+              pathname.startsWith('/alerts')
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <Bell className={clsx('w-4 h-4', pathname.startsWith('/alerts') ? 'text-blue-400' : 'text-slate-400')} />
+            <span>Alerts</span>
+          </Link>
+
+          {/* Settings */}
+          <Link
+            href="/settings"
+            className={clsx(
+              'flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+              pathname.startsWith('/settings')
+                ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 font-semibold shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+            )}
+          >
+            <Settings className={clsx('w-4 h-4', pathname.startsWith('/settings') ? 'text-blue-400' : 'text-slate-400')} />
+            <span>Settings</span>
+          </Link>
         </nav>
       </div>
 
@@ -79,5 +169,13 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
     </aside>
+  );
+}
+
+export const Sidebar: React.FC = () => {
+  return (
+    <React.Suspense fallback={<div className="w-64 bg-slate-900 min-h-screen" />}>
+      <SidebarContent />
+    </React.Suspense>
   );
 };

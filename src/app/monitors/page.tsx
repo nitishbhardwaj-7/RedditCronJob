@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,13 +16,24 @@ interface MonitorWithStats extends IMonitor {
   negativeComments?: number;
 }
 
-export default function MonitorsPage() {
+function MonitorsContent() {
+  const searchParams = useSearchParams();
+  const platformParam = searchParams.get('platform');
+
   const [monitors, setMonitors] = useState<MonitorWithStats[]>([]);
   const [search, setSearch] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (platformParam && ['reddit', 'quora', 'teamblind', 'all'].includes(platformParam)) {
+      setSelectedPlatform(platformParam);
+    } else if (!platformParam) {
+      setSelectedPlatform('all');
+    }
+  }, [platformParam]);
 
   const fetchMonitors = async () => {
     setIsLoading(true);
@@ -297,5 +309,13 @@ export default function MonitorsPage() {
         onSuccess={fetchMonitors}
       />
     </AppLayout>
+  );
+}
+
+export default function MonitorsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-slate-400 text-sm">Loading monitors...</div>}>
+      <MonitorsContent />
+    </Suspense>
   );
 }

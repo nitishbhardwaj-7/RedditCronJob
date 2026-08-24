@@ -60,16 +60,21 @@ export async function processMonitorCrawl(monitorId: string): Promise<CrawlResul
     // 3. Deduplicate against MongoDB (Incremental Comment Processing)
     const existingCommentDocs = await CommentModel.find(
       { monitorId: monitor._id },
-      { redditCommentId: 1 }
+      { redditCommentId: 1, body: 1 }
     ).lean();
 
     const existingCommentIdSet = new Set(existingCommentDocs.map((c) => c.redditCommentId));
-
-    const newCommentsToProcess = fetchedComments.filter(
-      (c) => !existingCommentIdSet.has(c.redditCommentId)
+    const existingCommentBodySet = new Set(
+      existingCommentDocs.map((c) => c.body.trim().toLowerCase())
     );
 
-    console.log(`🔍 Deduplication: ${fetchedComments.length} total, ${existingCommentIdSet.size} already in DB, ${newCommentsToProcess.length} NEW comments to analyze`);
+    const newCommentsToProcess = fetchedComments.filter(
+      (c) =>
+        !existingCommentIdSet.has(c.redditCommentId) &&
+        !existingCommentBodySet.has(c.body.trim().toLowerCase())
+    );
+
+    console.log(`🔍 Deduplication: ${fetchedComments.length} total, ${existingCommentDocs.length} already in DB, ${newCommentsToProcess.length} NEW comments to analyze`);
 
     let newNegativeCount = 0;
     let alertSent = false;

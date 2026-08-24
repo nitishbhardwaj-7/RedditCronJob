@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { InternalRedditComment } from '@/types/domain';
 
 export function normalizeComment(raw: Record<string, unknown>, fallbackPostId: string): InternalRedditComment | null {
@@ -36,8 +37,9 @@ export function normalizeComment(raw: Record<string, unknown>, fallbackPostId: s
 
   if (!redditCommentId) {
     // Generate deterministic hash if ID is missing
-    const str = `${raw.author || 'anon'}_${body.slice(0, 30)}_${raw.created_utc || Date.now()}`;
-    redditCommentId = `gen_${Buffer.from(str).toString('hex').slice(0, 12)}`;
+    const str = `${raw.author || 'anon'}_${body.trim()}_${raw.created_utc || fallbackPostId}`;
+    const hash = crypto.createHash('md5').update(str).digest('hex').slice(0, 16);
+    redditCommentId = `gen_${hash}`;
   }
 
   // Clean ID if prefixed with t1_ (Reddit comment prefix)

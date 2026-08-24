@@ -1,6 +1,13 @@
+import crypto from 'crypto';
 import { ApifyClient } from 'apify-client';
 import { RedditProvider } from '../providers/types';
 import { InternalRedditComment } from '@/types/domain';
+
+function generateQuoraCommentId(prefix: string, body: string, author?: string, quoraUrl?: string): string {
+  const str = `${prefix}_${author || 'anon'}_${body.trim()}_${quoraUrl || ''}`;
+  const hash = crypto.createHash('md5').update(str).digest('hex').slice(0, 16);
+  return `${prefix}_${hash}`;
+}
 
 export class ApifyQuoraProvider implements RedditProvider {
   public name = 'Apify Quora Provider';
@@ -30,15 +37,21 @@ export class ApifyQuoraProvider implements RedditProvider {
           const { items } = await this.client.dataset(run.defaultDatasetId).listItems();
           console.log(`📦 Retrieved ${items.length} raw Quora dataset items`);
 
-          const comments: InternalRedditComment[] = items.map((item: any, idx: number) => ({
-            redditCommentId: item.id || `quora_ans_${Date.now()}_${idx}`,
-            postId: quoraUrl.split('/')[3] || 'quora_question',
-            author: item.authorName || item.user || 'Quora Contributor',
-            body: item.answerText || item.text || item.content || String(item),
-            redditUrl: item.url || quoraUrl,
-            createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
-            platform: 'quora',
-          }));
+          const comments: InternalRedditComment[] = items.map((item: any, idx: number) => {
+            const body = item.answerText || item.text || item.content || String(item);
+            const author = item.authorName || item.user || 'Quora Contributor';
+            const commentId = item.id || item.answerId || item.commentId || generateQuoraCommentId('quora_ans', body, author, quoraUrl);
+
+            return {
+              redditCommentId: commentId,
+              postId: quoraUrl.split('/')[3] || 'quora_question',
+              author: author,
+              body: body,
+              redditUrl: item.url || quoraUrl,
+              createdAt: item.createdAt ? new Date(item.createdAt) : new Date('2026-08-01T00:00:00Z'),
+              platform: 'quora',
+            };
+          });
 
           if (comments.length > 0) return comments;
         }
@@ -50,23 +63,26 @@ export class ApifyQuoraProvider implements RedditProvider {
 
     // Fallback simulated Quora answers/comments if dataset empty or scraper fails
     console.log(`ℹ️ Generating fallback Quora answers for URL: ${quoraUrl}`);
+    const q1Body = 'Honestly, the service speed has degraded significantly over the last month. Customer support responsiveness is disappointing.';
+    const q2Body = 'Pricing has increased by 30% without any noticeable feature updates or performance enhancements. Not recommended.';
+
     return [
       {
-        redditCommentId: `quora_q1_${Date.now()}`,
+        redditCommentId: generateQuoraCommentId('quora_q1', q1Body, 'TechAnalyst_Pro', quoraUrl),
         postId: quoraUrl.split('/')[3] || 'quora_topic',
         author: 'TechAnalyst_Pro',
-        body: 'Honestly, the service speed has degraded significantly over the last month. Customer support responsiveness is disappointing.',
+        body: q1Body,
         redditUrl: quoraUrl,
-        createdAt: new Date(),
+        createdAt: new Date('2026-08-01T00:00:00Z'),
         platform: 'quora',
       },
       {
-        redditCommentId: `quora_q2_${Date.now()}`,
+        redditCommentId: generateQuoraCommentId('quora_q2', q2Body, 'VerifiedUser_99', quoraUrl),
         postId: quoraUrl.split('/')[3] || 'quora_topic',
         author: 'VerifiedUser_99',
-        body: 'Pricing has increased by 30% without any noticeable feature updates or performance enhancements. Not recommended.',
+        body: q2Body,
         redditUrl: quoraUrl,
-        createdAt: new Date(),
+        createdAt: new Date('2026-08-01T00:00:00Z'),
         platform: 'quora',
       },
     ];

@@ -1,0 +1,21 @@
+name: Hourly Brand Monitor Cron
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Hourly Cron Endpoint
+        run: |
+          APP_URL="${{ secrets.NEXT_PUBLIC_APP_URL }}"
+          CRON_SECRET="${{ secrets.CRON_SECRET }}"
+          if [ -z "$APP_URL" ]; then
+            APP_URL="https://reddit-cron-job.vercel.app"
+          fi
+          echo "⏰ Triggering hourly cron on $APP_URL"
+          curl -s -f -X GET "$APP_URL/api/cron/reddit-monitor?secret=$CRON_SECRET" || echo "⚠️ Cron trigger finished with status"
